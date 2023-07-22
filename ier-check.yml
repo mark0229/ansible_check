@@ -1,0 +1,27 @@
+---
+- name: Auto check
+  hosts: CISCO-XR-IER
+  vars:
+   save_dir: /etc/ansible/playbook/check/check_result/{{ inventory_hostname }}
+   command_dir: /etc/ansible/playbook/check/check_command/
+  gather_facts: no
+  tasks:
+   - name: create file
+     file: 
+      dest: "{{save_dir}}"
+      state: touch
+   - name: run command from file
+     ios_command: 
+         commands: 
+         - "{{ item }} "
+     ignore_errors: yes
+     register: output
+     loop: "{{ lookup ('file', '{{command_dir}}ier_command').splitlines() }}"
+   - name: save the file
+     lineinfile:
+       dest: "{{save_dir}}"
+       line: "\n ======{{ item.item }}====\n\n {{ item.stdout|join('\n')}}"
+       insertafter: EOF
+     ignore_errors: yes
+     loop: "{{ output.results }}"
+...

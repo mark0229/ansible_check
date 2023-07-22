@@ -1,0 +1,23 @@
+---
+- name: Auto check
+  hosts: CISCO-ACI
+  vars:
+   save_dir: /etc/ansible/playbook/check/check_result_2/{{ inventory_hostname }}
+   command_dir: /etc/ansible/playbook/check/check_command/
+  gather_facts: no
+  tasks:
+   - name: run command from file
+     raw: "{{ item }} "
+     ignore_errors: yes
+     register: output
+     loop: "{{ lookup ('file', '{{command_dir}}aci_command').splitlines() }}"
+   - name: save the file
+     lineinfile:
+       dest: "{{save_dir}}"
+       line: "\n ======{{ item.item }}====\n\n {{ item.stdout }}"
+       insertafter: EOF
+       create: yes
+     delegate_to: localhost
+     ignore_errors: yes
+     loop: "{{ output.results }}"
+...
